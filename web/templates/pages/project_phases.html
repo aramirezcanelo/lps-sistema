@@ -1,0 +1,10 @@
+{% extends "pages/layout.html" %}
+{% block page_action %}<a class="btn btn-soft" href="/proyectos"><span aria-hidden="true">←</span> Volver a proyectos</a>{% endblock %}
+{% block body %}
+<!-- Área para organizar las etapas de trabajo del proyecto. -->
+<section class="panel phase-panel">
+  <div class="panel-heading"><div><h2>Etapas del proyecto</h2><p>Organiza fases y fechas para dar seguimiento al avance.</p></div><button class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#nuevaFase" aria-expanded="false" aria-controls="nuevaFase"><span aria-hidden="true">＋</span> Agregar etapa</button></div>
+  <div class="collapse" id="nuevaFase"><form hx-post="/proyectos/fases" hx-target="#fases-feedback" class="data-form phase-form">{% csrf_token %}<div id="fases-feedback" role="status"></div><label for="phase-name">Nombre de la etapa<input id="phase-name" name="nombre" placeholder="Ej. Preparación" required></label><div class="form-grid"><label for="phase-start">Fecha de inicio<input id="phase-start" type="date" name="fecha_inicio"></label><label for="phase-end">Fecha de cierre<input id="phase-end" type="date" name="fecha_fin"></label></div><button class="btn btn-primary" type="submit">Guardar etapa</button></form></div>
+  <div id="fases-lista" class="empty-state"><span class="empty-icon" aria-hidden="true">▦</span><strong>Este proyecto aún no tiene etapas</strong><p>Agrega la primera etapa para comenzar a registrar el avance.</p></div>
+</section>
+{% endblock %}

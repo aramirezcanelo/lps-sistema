@@ -1,0 +1,5 @@
+{% extends "pages/layout.html" %}
+{% block body %}
+<!-- Muestra los roles disponibles en una lista legible. -->
+<section class="panel list-panel"><div class="panel-heading"><div><h2>Roles del sistema</h2><p>Perfiles disponibles para organizar el acceso al portal.</p></div></div><div class="role-list">{% for row in Rows %}<div class="role-item"><span class="role-icon" aria-hidden="true">◇</span><strong>{{ row.Nombre|default:row.Name }}</strong></div>{% empty %}<div class="empty-state"><strong>Aún no hay roles</strong></div>{% endfor %}</div></section>
+{% endblock %}

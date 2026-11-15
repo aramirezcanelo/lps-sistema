@@ -1,0 +1,24 @@
+{% extends "pages/layout.html" %}
+{% block body %}
+<!-- Presentación breve para orientar al usuario al iniciar sesión. -->
+<section class="welcome-card dashboard-welcome">
+  <div class="welcome-label">Qué gusto verte{% if User.Name %}, {{ User.Name }}{% endif %}</div>
+  <h2>¿Qué te gustaría hacer hoy?</h2>
+  <p>Entra a un área para consultar y dar seguimiento al trabajo del equipo.</p>
+</section>
+<!-- Los accesos disponibles se generan según los permisos del usuario. -->
+<section class="dashboard-section" aria-labelledby="areas-heading">
+  <div class="section-heading"><div><span class="eyebrow">Tu espacio de trabajo</span><h2 id="areas-heading">Áreas disponibles</h2></div><span class="section-count">{{ Modules|length }} áreas</span></div>
+  <div class="module-grid">
+    {% for module in Modules %}
+    <a class="module-card" href="{{ module.Path }}">
+      <span class="module-card-icon" aria-hidden="true">{% if module.Icon == 'finance' %}＄{% elif module.Icon == 'projects' %}▦{% elif module.Icon == 'document' %}▤{% elif module.Icon == 'shield' %}◇{% else %}◈{% endif %}</span>
+      <span class="module-card-copy"><strong>{{ module.Name }}</strong><small>{{ module.Description }}</small></span>
+      <span class="module-card-arrow" aria-hidden="true">→</span>
+    </a>
+    {% empty %}
+    <div class="empty-state"><strong>No hay áreas disponibles</strong><p>Si necesitas acceso, solicita ayuda a administración.</p></div>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,18 @@
+{% extends "pages/layout.html" %}
+{% block page_action %}<a class="btn btn-soft" href="/drive">← Volver a Drive</a>{% endblock %}
+{% block body %}
+<section class="panel list-panel file-preview-page">
+  <div class="panel-heading"><div><h2>{{ Asset.Name }}</h2><p>{{ Asset.Type }} · {{ Asset.Size }}</p></div><a class="btn btn-primary" href="/assets/download?id={{ Asset.ID }}">Descargar archivo</a></div>
+  <div class="file-preview-content">
+  {% if PreviewKind == "embed" %}<iframe class="file-preview-frame" src="{{ PreviewFile }}" title="Vista previa de {{ Asset.Name }}"></iframe>
+  {% elif PreviewKind == "audio" %}<audio controls preload="metadata"><source src="{{ PreviewFile }}" type="{{ Asset.Type }}">Tu navegador no puede reproducir este audio.</audio>
+  {% elif PreviewKind == "video" %}<video controls preload="metadata"><source src="{{ PreviewFile }}" type="{{ Asset.Type }}">Tu navegador no puede reproducir este video.</video>
+  {% elif PreviewKind == "text" %}<pre class="file-preview-text">{{ PreviewText }}</pre>
+  {% elif PreviewKind == "document" %}<article class="office-preview">{% for paragraph in PreviewText %}<p>{{ paragraph }}</p>{% empty %}<p>El documento no contiene texto visible.</p>{% endfor %}</article>
+  {% elif PreviewKind == "slides" %}<div class="office-preview slide-preview">{% for slide in PreviewSlides %}<article><h3>Diapositiva {{ slide.Number }}</h3><p>{{ slide.Text|default:"Sin texto" }}</p></article>{% empty %}<p>No hay diapositivas para mostrar.</p>{% endfor %}</div>
+  {% elif PreviewKind == "spreadsheet" %}<div class="table-wrap"><table class="table"><tbody>{% for row in PreviewSheets %}<tr>{% for cell in row %}<td>{{ cell }}</td>{% endfor %}</tr>{% empty %}<tr><td>La hoja está vacía.</td></tr>{% endfor %}</tbody></table></div>
+  {% elif PreviewKind == "archive" %}<div class="office-preview"><h3>Contenido del archivo comprimido</h3><ul>{% for file in ArchiveFiles %}<li>{{ file }}</li>{% empty %}<li>El archivo está vacío.</li>{% endfor %}</ul></div>
+  {% else %}<div class="empty-state"><span class="empty-icon">▤</span><strong>Vista de contenido binario</strong><p>Este formato no tiene un visor integrado en el navegador. Puedes inspeccionar su inicio en hexadecimal o descargar el original.</p><pre class="file-preview-text">{{ BinaryPreview }}</pre></div>{% endif %}
+  </div>
+</section>
+{% endblock %}

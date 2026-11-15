@@ -1,0 +1,6 @@
+Django==5.2.19
+psycopg[binary]==3.3.9
+openpyxl==3.1.5
+bcrypt==4.3.0
+gunicorn==27.0.1; sys_platform != "win32"
+whitenoise==6.12.0

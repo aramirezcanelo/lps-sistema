@@ -1,0 +1,18 @@
+{% extends "pages/layout.html" %}
+{% block body %}
+<!-- Administración de cuentas con controles agrupados y acciones diferenciadas. -->
+<section class="panel account-list">
+  <details class="panel"><summary>＋ Crear cuenta</summary><p>Administración usa contraseña de 10 a 72 caracteres. Presidencia y Vicepresidencia usan NIP de 4 dígitos.</p><form method="post" action="/usuarios" class="account-row">{% csrf_token %}<input type="hidden" name="accion" value="crear"><label>Usuario<input name="usuario" maxlength="100" required></label><label>Contraseña o NIP<input name="contrasena" type="password" maxlength="72" autocomplete="new-password" placeholder="Según el rol elegido" required></label><label>Rol<select name="rol" required><option value="">Selecciona un rol</option>{% for role in Roles %}<option value="{{ role.Name }}">{{ role.Name }}</option>{% endfor %}</select></label><label class="approval-check"><input type="checkbox" name="acceso" checked> Aprobar acceso</label><button class="btn btn-primary">Crear cuenta</button></form></details>
+  <div class="panel-heading"><div><h2>Cuentas y solicitudes</h2><p>Asigna un rol y habilita el acceso de cada integrante.</p></div></div>
+  {% for x in Accounts %}
+  <form method="post" action="/usuarios" class="account-row">
+    {% csrf_token %}<input type="hidden" name="id" value="{{ x.ID }}">
+    <div class="account-identity"><span class="avatar" aria-hidden="true">{{ x.Username|first|upper }}</span><div><strong>{{ x.Username }}</strong><small>{% if x.Approved and x.Active %}Acceso habilitado{% else %}Solicitud pendiente{% endif %}</small></div></div>
+    <label for="user-role-{{ x.ID }}">Rol<select id="user-role-{{ x.ID }}" name="rol"><option value="">Sin rol / acceso desactivado</option>{% for role in Roles %}<option value="{{ role.Name }}" {% if role.Name == x.Role %}selected{% endif %}>{{ role.Name }}</option>{% endfor %}</select></label>
+    <label for="user-password-{{ x.ID }}">Nueva contraseña o NIP<input id="user-password-{{ x.ID }}" name="contrasena" type="password" maxlength="72" autocomplete="new-password" placeholder="Deja en blanco para conservar"></label>
+    <label class="approval-check"><input type="checkbox" name="acceso" {% if x.Approved and x.Active %}checked{% endif %}> Habilitar acceso</label>
+    <div class="account-actions"><button class="btn btn-primary" name="accion" value="guardar">Guardar</button>{% if not x.Approved or not x.Active %}<button class="btn btn-soft" name="accion" value="rechazar">Rechazar solicitud</button>{% endif %}{% if x.Username != User.Name %}<button class="btn btn-danger-soft" name="accion" value="eliminar" data-confirm-action="Eliminar la cuenta de {{ x.Username }}">Eliminar</button>{% endif %}</div>
+  </form>
+  {% empty %}<div class="empty-state"><strong>No hay solicitudes ni cuentas</strong><p>Las solicitudes nuevas aparecerán aquí.</p></div>{% endfor %}
+</section>
+{% endblock %}

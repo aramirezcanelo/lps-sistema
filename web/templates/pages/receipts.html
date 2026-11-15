@@ -1,0 +1,10 @@
+{% extends "pages/layout.html" %}
+{% block page_action %}<a class="btn btn-soft" href="/finanzas"><span aria-hidden="true">←</span> Volver a finanzas</a>{% endblock %}
+{% block body %}
+<!-- Filtros de comprobantes listos para actualizar resultados con HTMX. -->
+<section class="panel list-panel">
+  <div class="panel-heading"><div><h2>Comprobantes</h2><p>Filtra los documentos de respaldo por movimiento o estado.</p></div></div>
+  <form method="get" hx-get="/finanzas/comprobantes" hx-target="#comprobantes-lista" class="list-toolbar"><label class="search-field" for="receipt-search"><span aria-hidden="true">⌕</span><input id="receipt-search" type="search" name="q" placeholder="Buscar folio o movimiento"></label><label class="filter-field" for="receipt-status"><span class="visually-hidden">Filtrar por estado</span><select id="receipt-status" name="estatus"><option value="">Todos los estados</option><option>Pendiente</option><option>Revisado</option><option>Rechazado</option></select></label><button class="btn btn-soft" type="submit">Filtrar</button></form>
+  <div id="comprobantes-lista" class="empty-state"><span class="empty-icon" aria-hidden="true">▧</span><strong>Aún no hay comprobantes</strong><p>Los comprobantes asociados a los movimientos aparecerán aquí.</p></div>
+</section>
+{% endblock %}

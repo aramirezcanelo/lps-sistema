@@ -1,0 +1,19 @@
+{% extends "pages/layout.html" %}
+{% block body %}
+<!-- Registro de acceso con instrucciones visibles y campos etiquetados. -->
+<section class="auth-card">
+  {% if Sent %}
+  <div class="auth-intro"><span class="auth-icon auth-icon-success" aria-hidden="true">✓</span><h2>Solicitud recibida</h2><p>Podrás iniciar sesión cuando administración apruebe tu cuenta.</p></div>
+  <a class="btn btn-primary auth-submit" href="/login">Volver al inicio de sesión</a>
+  {% else %}
+  <div class="auth-intro"><span class="auth-icon" aria-hidden="true">◇</span><h2>Solicita acceso</h2><p>Crea una solicitud para unirte al portal del equipo.</p></div>
+  <form method="post" action="/registro" class="auth-form">
+    {% csrf_token %}
+    <label for="register-user">Usuario<input id="register-user" class="form-control" name="usuario" autocomplete="username" placeholder="Elige un nombre de usuario" required maxlength="100"></label>
+    <label for="register-password">NIP<input id="register-password" class="form-control" name="contrasena" type="password" inputmode="numeric" pattern="[0-9]{4}" minlength="4" maxlength="4" autocomplete="new-password" placeholder="4 dígitos" required><small class="field-hint">Elige un NIP numérico de 4 dígitos.</small></label>
+    <button class="btn btn-primary auth-submit" type="submit">Enviar solicitud <span aria-hidden="true">→</span></button>
+  </form>
+  <p class="auth-switch">¿Ya tienes una cuenta? <a href="/login">Inicia sesión</a></p>
+  {% endif %}
+</section>
+{% endblock %}

@@ -1,0 +1,26 @@
+# Secretos y configuración local
+.env
+.env.*
+!.env.example
+
+# Python y herramientas de desarrollo
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+.vscode/
+
+# Bases locales y datos generados
+*.sqlite3
+*.sqlite3-*
+*.db
+/data/assets/
+/staticfiles/
+test-results/
+*.log
+
+# Requisitos de la clase de base de datos; no forman parte de la publicación LPS.
+/MD/

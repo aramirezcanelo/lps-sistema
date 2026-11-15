@@ -1,0 +1,27 @@
+{% extends "pages/layout.html" %}
+{% block page_heading %}{% endblock %}
+{% block body %}
+<!-- Acceso dividido entre una bienvenida al equipo y un formulario directo y despejado. -->
+<section class="login-layout" aria-label="Acceso al portal">
+  <aside class="login-welcome">
+    <div class="login-welcome-brand"><span class="login-brand-symbol" aria-hidden="true"></span><span>LINCES <b>POR EL SERVICIO</b></span></div>
+    <div class="login-welcome-copy"><span class="login-eyebrow">UN ESPACIO PARA SERVIR</span><h1>Lo que hacemos en equipo deja huella.</h1><p>Entra al portal para dar seguimiento a los proyectos y compartir el trabajo de nuestra comunidad.</p></div>
+    <div class="login-values"><span>Compromiso</span><i aria-hidden="true"></i><span>Altruismo</span><i aria-hidden="true"></i><span>Colaboración</span></div>
+    <span class="login-orbit login-orbit-one" aria-hidden="true"></span><span class="login-orbit login-orbit-two" aria-hidden="true"></span>
+  </aside>
+  <div class="login-form-panel">
+    <div class="login-form-inner">
+      <span class="login-form-kicker">BIENVENIDO DE VUELTA</span><h2>Inicia sesión</h2><p class="login-subtitle">Ingresa tus datos para continuar.</p>
+      <form method="post" action="/login" class="auth-form">
+        {% csrf_token %}<input type="hidden" name="next" value="{{ Next }}">
+        <div id="login-feedback">{% if Message %}<p class="alert alert-danger" role="alert">{{ Message }}</p>{% endif %}</div>
+        <label for="login-user">Usuario<input id="login-user" class="form-control" name="usuario" autocomplete="username" placeholder="Escribe tu usuario" required></label>
+        <label for="login-password">NIP o contraseña<input id="login-password" class="form-control" type="password" name="contrasena" autocomplete="current-password" placeholder="NIP de 4 dígitos o contraseña administrativa" required></label>
+        <button class="btn btn-primary auth-submit" type="submit">Entrar al portal <span aria-hidden="true">→</span></button>
+      </form>
+      <p class="auth-switch">¿Aún no tienes acceso? <a href="/registro">Solicita una cuenta</a></p>
+      <div class="login-secure-note"><span aria-hidden="true">●</span> Acceso privado para integrantes del equipo</div>
+    </div>
+  </div>
+</section>
+{% endblock %}
