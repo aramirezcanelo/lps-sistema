@@ -185,7 +185,13 @@ def finance(request):
     gate=allowed(request,"finanzas")
     if gate: return gate
     if request.method!="GET": return HttpResponse("Método no permitido.",status=405)
+    selected_date=request.GET.get("fecha","").strip()
+    try: selected_day=parse_date(selected_date) if selected_date else None
+    except ValueError: selected_day=None; selected_date=""
     incomes=Income.objects.order_by("-date","-id"); expenses=Expense.objects.select_related("purchase").order_by("-date","-id")
+    if selected_day:
+        incomes=incomes.filter(date=selected_day)
+        expenses=expenses.filter(date=selected_day)
     purchase_rows={}
     for row in expenses:
         key=("purchase",row.purchase_id) if row.purchase_id else ("legacy",row.id)
@@ -207,7 +213,7 @@ def finance(request):
     expense_days=list(days.values())
     for day in expense_days: day["AmountMx"]=day["Amount"]/100
     today=timezone.localdate().isoformat()
-    ctx=base_context(request, Today=today, CanEdit=current_role(request.user) in (ADMIN,"finanzas"), Items=[{"ID":x.id,"Date":x.date.isoformat(),"Concept":x.concept,"Amount":x.cents,"AmountMx":x.cents/100,"Quantity":expense_quantity(x.notes),"Unit":expense_unit(x.cents,x.notes),"Origin":x.origin,"Responsible":x.responsible,"Notes":expense_notes(x.notes)} for x in incomes], ExpenseDays=expense_days, Total=sum(x.cents for x in incomes), ExpenseTotal=sum(x.cents for x in expenses), Message=request.GET.get("mensaje",""))
+    ctx=base_context(request, Today=today, SelectedDate=selected_date, CanEdit=current_role(request.user) in (ADMIN,"finanzas"), Items=[{"ID":x.id,"Date":x.date.isoformat(),"Concept":x.concept,"Amount":x.cents,"AmountMx":x.cents/100,"Quantity":expense_quantity(x.notes),"Unit":expense_unit(x.cents,x.notes),"Origin":x.origin,"Responsible":x.responsible,"Notes":expense_notes(x.notes)} for x in incomes], ExpenseDays=expense_days, Total=sum(x.cents for x in incomes), ExpenseTotal=sum(x.cents for x in expenses), Message=request.GET.get("mensaje",""))
     ctx["TotalMx"] = ctx["Total"] / 100
     ctx["ExpenseTotalMx"] = ctx["ExpenseTotal"] / 100
     return render(request,"pages/finance.html",ctx)
@@ -400,7 +406,24 @@ def projects(request):
     gate=allowed(request,"*")
     if gate:return gate
     if request.method!="GET":return HttpResponse("Método no permitido.",status=405)
-    return render(request,"pages/projects.html",base_context(request,Title="Proyectos",CanEdit=current_role(request.user) in (ADMIN,"proyectos"),Deadlines=ProjectDeadline.objects.order_by("due_date"),Inventory=ProjectInventory.objects.order_by("item"),Notes=ProjectNote.objects.order_by("-created_at")))
+    selected_date=request.GET.get("fecha","").strip()
+    try: selected_day=parse_date(selected_date) if selected_date else None
+    except ValueError: selected_day=None; selected_date=""
+    deadlines=ProjectDeadline.objects.order_by("due_date","title")
+    notes=ProjectNote.objects.order_by("-created_at")
+    if selected_day:
+        deadlines=deadlines.filter(due_date=selected_day)
+        notes=notes.filter(created_at__date=selected_day)
+    deadlines=list(deadlines); notes=list(notes)
+    deadline_groups={}; note_groups={}
+    for item in deadlines:
+        group=deadline_groups.setdefault(item.due_date,{"Date":item.due_date,"Items":[]})
+        group["Items"].append(item)
+    for item in notes:
+        day=timezone.localtime(item.created_at).date()
+        group=note_groups.setdefault(day,{"Date":day,"Items":[]})
+        group["Items"].append(item)
+    return render(request,"pages/projects.html",base_context(request,Title="Proyectos",CanEdit=current_role(request.user) in (ADMIN,"proyectos"),SelectedDate=selected_date,Deadlines=deadlines,DeadlineDays=list(deadline_groups.values()),Inventory=ProjectInventory.objects.order_by("item"),Notes=notes,NoteDays=list(note_groups.values())))
 
 def project_save(request):
     gate=allowed(request,"*")
