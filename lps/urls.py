@@ -15,7 +15,7 @@ urlpatterns = [
     path("proyectos/fases", views.project_phases), path("proyectos/dashboard", views.projects),
     path("proyectos", views.projects), path("proyectos/guardar", views.project_save), path("proyectos/eliminar", views.project_delete),
     path("drive", views.assets), path("assets", views.assets), path("assets/upload", views.asset_upload), path("assets/replace", views.asset_replace), path("assets/preview", views.asset_preview), path("assets/preview/file", views.asset_preview_file), path("assets/restore", views.asset_restore), path("assets/download", views.asset_download), path("assets/delete", views.asset_delete),
-    path("presidencia", views.presidency), path("recursos-humanos", views.human_resources), path("usuarios", views.users), path("roles", views.roles),
+    path("usuarios", views.users), path("roles", views.roles),
 ]
 
 # runserver sirve los estáticos locales independientemente del modo DEBUG.

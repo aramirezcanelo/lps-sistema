@@ -30,10 +30,6 @@ Todos los integrantes pueden consultar y descargar archivos compartidos. Difusi�
 
 Administración puede crear cuentas, asignar roles, habilitar o rechazar solicitudes, actualizar el NIP y eliminar otras cuentas. Para conservar un NIP, deja el campo de cambio vacío. El sistema no permite eliminar la cuenta administrativa que está en uso.
 
-### Recursos Humanos y Presidencia
-
-Recursos Humanos ofrece acceso al espacio del área y al Drive compartido. Presidencia y Vicepresidencia pueden abrir su espacio de coordinación y consultar proyectos.
-
 ## Recomendaciones
 
 - Revisa fecha, cantidad e importe antes de registrar movimientos financieros.

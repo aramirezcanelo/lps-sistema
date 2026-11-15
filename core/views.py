@@ -29,14 +29,9 @@ def modules_for_role(role):
         "assets": {"Name": "Drive", "Path": "/drive", "Icon": "document", "Description": "Archivos compartidos para consultar y descargar."},
     }
     admin_items=[{"Name":"Usuarios","Path":"/usuarios","Icon":"people","Description":"Aprueba cuentas y asigna roles."}]
-    hr = {"Name": "Recursos Humanos", "Path": "/recursos-humanos", "Icon": "people", "Description": "Espacio de gestión para el equipo."}
     modules = [items["projects"], items["assets"]]
     if role in (ADMIN, "finanzas", "presidente", "vicepresidente"):
         modules.insert(0, items["finance"])
-    if role in (ADMIN, "presidente", "vicepresidente"):
-        modules.insert(0, {"Name": "Presidencia", "Path": "/presidencia", "Icon": "shield", "Description": "Seguimiento de asuntos de presidencia."})
-    if role in (ADMIN, "presidente", "vicepresidente", "recursos_humanos"):
-        modules.insert(0, hr)
     if role == ADMIN:
         modules.insert(0, admin_items[0])
     return modules
@@ -86,7 +81,6 @@ def allowed(request, role):
         target = request.get_full_path()
         return see_other("/login?" + urlencode({"next": target}))
     valid = user_role == ADMIN or role == "*" or user_role == role
-    if role == "liderazgo": valid = valid or user_role in ("presidente", "vicepresidente")
     if role == "gestores_assets": valid = user_role in (ADMIN, "difusion")
     if user_role in ("presidente", "vicepresidente") and role not in (ADMIN, "administrador", "*"):
         valid = True
@@ -418,14 +412,6 @@ def project_phases(request):
     gate=allowed(request,"*")
     if current_role(request.user) not in (ADMIN,"proyectos","presidente","vicepresidente"):return gate or error_page(403,"Acceso restringido","No tienes acceso a esta sección.","/proyectos")
     return gate or render(request,"pages/project_phases.html",base_context(request,Title="Fases del proyecto"))
-def presidency(request):
-    gate=allowed(request,"liderazgo")
-    return gate or render(request,"pages/presidency.html",base_context(request,Title="Espacio de coordinación"))
-
-def human_resources(request):
-    gate=allowed(request,"recursos_humanos")
-    return gate or render(request,"pages/human_resources.html",base_context(request,Title="Recursos Humanos"))
-
 def assets(request):
     gate=allowed(request,"*")
     if gate:return gate
@@ -664,7 +650,6 @@ def users(request):
     gate=allowed(request,"administrador")
     if gate:return gate
     Role.objects.get_or_create(name="difusion",defaults={"description":"Gestión de difusión y archivos compartidos"})
-    Role.objects.get_or_create(name="recursos_humanos",defaults={"description":"Gestión de recursos humanos"})
     if request.method=="GET":
         accounts=[{"ID":u.id,"Username":u.username,"Role":"" if u.role_name=="servicio_social" else u.role_name,"Approved":u.approved,"Active":u.is_active} for u in User.objects.prefetch_related("roles").order_by("approved","id")]
         roles_list=[{"ID":r.id,"Name":r.name} for r in Role.objects.filter(active=True).exclude(name="servicio_social").order_by("id")]
@@ -696,8 +681,6 @@ def users(request):
         if password and not valid_password_for_role(password,role):raise ValueError()
         if approved and role and role.name==ADMIN and not password and account.role_name!=ADMIN:
             return form_feedback("/usuarios","Al asignar Administración debes definir una contraseña de al menos 10 caracteres.")
-        if approved and role and role.name in ("presidente","vicepresidente") and not password and account.role_name not in ("presidente","vicepresidente"):
-            return form_feedback("/usuarios","Al asignar Presidencia o Vicepresidencia debes definir un NIP de 4 dígitos.")
         if User.objects.filter(username=username).exclude(pk=account.pk).exists():return action_error(409,"Ese usuario ya existe","Elige otro nombre de usuario.","/usuarios")
         account.username=username;account.is_active=approved;account.approved=approved
         if password:account.set_password(password)

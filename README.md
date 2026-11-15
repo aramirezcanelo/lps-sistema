@@ -8,7 +8,6 @@ Aplicación web de LPS construida con Django. Usa SQLite para la base de datos, 
 - Finanzas: compras, ingresos, edición, eliminación y reportes XLSX.
 - Proyectos: fechas, inventario y notas compartidas.
 - Drive: carga múltiple, vista previa, reemplazo, papelera, restauración y descarga.
-- Áreas de presidencia y recursos humanos con permisos según rol.
 
 ## Requisitos
 

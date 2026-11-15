@@ -36,6 +36,18 @@ class WebContractTests(TestCase):
         self.assertEqual(response.content, b"ok")
         self.assertTrue(response["Content-Type"].startswith("text/plain"))
 
+    def test_presidency_and_hr_sections_are_removed_but_roles_remain(self):
+        self.assertTrue(Role.objects.filter(name__in=("presidente", "vicepresidente", "recursos_humanos")).exists())
+        for path in ("/presidencia", "/recursos-humanos"):
+            with self.subTest(path=path):
+                self.assertEqual(self.client.get(path).status_code, 404)
+        self.client.force_login(self.admin)
+        response = self.client.get("/")
+        self.assertNotContains(response, "/presidencia")
+        self.assertNotContains(response, "/recursos-humanos")
+        self.assertContains(self.client.get("/roles"), "presidente")
+        self.assertContains(self.client.get("/roles"), "recursos_humanos")
+
     def test_django_admin_is_restricted_to_the_administrator_role(self):
         self.client.force_login(self.admin)
         self.assertEqual(self.client.get("/admin/").status_code, 200)
@@ -69,7 +81,7 @@ class WebContractTests(TestCase):
         from django.core.files.uploadedfile import SimpleUploadedFile
         for user in (self.president,self.vice):
             self.client.force_login(user)
-            for path in ("/finanzas","/finanzas/comprobantes","/finanzas/exportar","/proyectos","/drive","/presidencia","/recursos-humanos"):
+            for path in ("/finanzas","/finanzas/comprobantes","/finanzas/exportar","/proyectos","/drive"):
                 with self.subTest(user=user.username,path=path): self.assertEqual(self.client.get(path).status_code,200)
             self.assertEqual(self.client.get("/usuarios").status_code,403)
             self.assertEqual(self.client.post("/finanzas/egresos/registrar",{"cantidad":"1","concepto":"X","precio_unitario":"1"}).status_code,403)
@@ -86,7 +98,7 @@ class WebContractTests(TestCase):
         self.assertTrue(user.password.startswith("pbkdf2_sha256$"))
 
     def test_unauthenticated_page_redirects_to_login(self):
-        paths = ("/", "/finanzas", "/finanzas/comprobantes", "/finanzas/exportar", "/proyectos", "/proyectos/fases", "/drive", "/assets", "/assets/download?id=1", "/presidencia", "/recursos-humanos", "/usuarios", "/roles")
+        paths = ("/", "/finanzas", "/finanzas/comprobantes", "/finanzas/exportar", "/proyectos", "/proyectos/fases", "/drive", "/assets", "/assets/download?id=1", "/usuarios", "/roles")
         for path in paths:
             with self.subTest(path=path):
                 response = self.client.get(path)
@@ -131,7 +143,8 @@ class WebContractTests(TestCase):
 
     def test_role_denial_returns_403(self):
         self.client.force_login(self.finance)
-        self.assertEqual(self.client.get("/presidencia").status_code, 403)
+        self.assertEqual(self.client.get("/presidencia").status_code, 404)
+        self.assertEqual(self.client.get("/recursos-humanos").status_code, 404)
 
     def test_account_role_update_invalidates_sessions(self):
         other=Client();other.force_login(self.other)
@@ -378,7 +391,7 @@ class WebContractTests(TestCase):
 
     def test_all_active_page_templates_render(self):
         self.client.force_login(self.admin)
-        paths = ("/", "/usuarios", "/roles", "/finanzas", "/finanzas/comprobantes", "/proyectos", "/assets", "/drive", "/presidencia")
+        paths = ("/", "/usuarios", "/roles", "/finanzas", "/finanzas/comprobantes", "/proyectos", "/assets", "/drive")
         for path in paths:
             with self.subTest(path=path):
                 self.assertEqual(self.client.get(path).status_code, 200)
