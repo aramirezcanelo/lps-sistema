@@ -67,6 +67,10 @@
     const master = document.querySelector(`[data-select-all="${item.getAttribute("form")}"]`);
     if (!master) return;
 
+    document.querySelectorAll(`input[type="checkbox"][form="${item.getAttribute("form")}"][name="${item.name}"][value="${item.value}"]`).forEach((peer) => {
+      peer.checked = item.checked;
+    });
+
     const items = document.querySelectorAll(`input[type="checkbox"][form="${item.getAttribute("form")}"][name="ids"], input[type="checkbox"][form="${item.getAttribute("form")}"][name="purchase_ids"]`);
     const checkedItems = Array.from(items).filter((checkbox) => checkbox.checked);
     master.checked = items.length > 0 && checkedItems.length === items.length;
