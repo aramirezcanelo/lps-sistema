@@ -589,6 +589,9 @@ body { background: radial-gradient(ellipse at 92% 0%,rgba(232,177,59,.12),transp
 .finance-panel .panel-heading { margin-bottom: 12px; }
 .finance-panel .panel-heading h2 { padding: 0; border: 0; }
 .finance-panel .panel-heading p { margin: 5px 0 0; }
+.finance-day-summary { background: rgba(20,51,42,.08); }
+.finance-day-summary td { padding-top: 13px; padding-bottom: 13px; }
+.finance-day-summary span { color: var(--muted); }
 .finance-shortcuts { display: flex; flex-wrap: wrap; gap: 9px; margin: 18px 0 8px; }
 @media (max-width:760px) { .finance-metrics, .finance-actions { grid-template-columns: 1fr; } .finance-shortcuts { display: grid; } .finance-shortcuts .btn { justify-content: center; } }
 

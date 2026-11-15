@@ -41,7 +41,7 @@ class AuditAdmin(admin.ModelAdmin):
 
 for model in (
     models.Person, models.Role, models.Permission,
-    models.Notification, models.Income, models.Expense, models.SharedAsset,
+    models.Notification, models.Income, models.Purchase, models.Expense, models.SharedAsset,
     models.ProjectDeadline, models.ProjectInventory, models.ProjectNote,
 ):
     admin.site.register(model)

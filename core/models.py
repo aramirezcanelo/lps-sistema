@@ -106,7 +106,17 @@ class Income(models.Model):
         db_table = "ingresos_financieros"
         constraints = [models.CheckConstraint(condition=models.Q(cents__gt=0), name="ingreso_monto_positivo")]
 
+class Purchase(models.Model):
+    date = models.DateField(db_column="fecha")
+    category = models.TextField(default="", db_column="categoria")
+    responsible = models.TextField(default="", db_column="responsable")
+    notes = models.TextField(default="", db_column="notas")
+    registered_by = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL, db_column="registrado_por")
+    created_at = models.DateTimeField(auto_now_add=True, db_column="creado_en")
+    class Meta: db_table = "compras_financieras"
+
 class Expense(models.Model):
+    purchase = models.ForeignKey(Purchase, null=True, blank=True, on_delete=models.CASCADE, db_column="compra_id", related_name="items")
     concept = models.TextField(db_column="concepto")
     cents = models.BigIntegerField(db_column="monto_centavos")
     date = models.DateField(db_column="fecha")

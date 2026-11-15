@@ -19,7 +19,7 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils import timezone
 from .forms import ExpenseForm, IncomeForm, ProjectDeadlineForm, ProjectInventoryForm, ProjectNoteForm
 
-from .models import User, Role, Income, Expense, SharedAsset, SharedAssetTrash, ProjectDeadline, ProjectInventory, ProjectNote
+from .models import User, Role, Income, Expense, Purchase, SharedAsset, SharedAssetTrash, ProjectDeadline, ProjectInventory, ProjectNote
 
 ADMIN = "administrador"
 def modules_for_role(role):
@@ -185,9 +185,29 @@ def finance(request):
     gate=allowed(request,"finanzas")
     if gate: return gate
     if request.method!="GET": return HttpResponse("Método no permitido.",status=405)
-    incomes=Income.objects.order_by("-date","-id"); expenses=Expense.objects.order_by("-date","-id")
+    incomes=Income.objects.order_by("-date","-id"); expenses=Expense.objects.select_related("purchase").order_by("-date","-id")
+    purchase_rows={}
+    for row in expenses:
+        key=("purchase",row.purchase_id) if row.purchase_id else ("legacy",row.id)
+        group=purchase_rows.setdefault(key,{"ID":row.purchase_id or row.id,"Date":(row.purchase.date if row.purchase_id else row.date).isoformat(),"Category":row.purchase.category if row.purchase_id else row.category,"Responsible":row.purchase.responsible if row.purchase_id else row.responsible,"Notes":row.purchase.notes if row.purchase_id else expense_notes(row.notes),"Lines":[],"Amount":0,"Quantity":0})
+        quantity=expense_quantity(row.notes)
+        group["Lines"].append({"ID":row.id,"Concept":row.concept,"Quantity":quantity,"Unit":expense_unit(row.cents,row.notes),"AmountMx":row.cents/100,"Notes":expense_notes(row.notes)})
+        group["Amount"]+=row.cents
+        group["Quantity"]+=quantity
+    days={}
+    for group in purchase_rows.values():
+        group["AmountMx"]=group["Amount"]/100
+        group["ProductCount"]=len(group["Lines"])
+        day=days.setdefault(group["Date"],{"Date":group["Date"],"Purchases":[],"Amount":0,"PurchaseCount":0,"ProductCount":0,"Quantity":0})
+        day["Purchases"].append(group)
+        day["Amount"]+=group["Amount"]
+        day["PurchaseCount"]+=1
+        day["ProductCount"]+=len(group["Lines"])
+        day["Quantity"]+=group["Quantity"]
+    expense_days=list(days.values())
+    for day in expense_days: day["AmountMx"]=day["Amount"]/100
     today=timezone.localdate().isoformat()
-    ctx=base_context(request, Today=today, CanEdit=current_role(request.user) in (ADMIN,"finanzas"), Items=[{"ID":x.id,"Date":x.date.isoformat(),"Concept":x.concept,"Amount":x.cents,"AmountMx":x.cents/100,"Quantity":expense_quantity(x.notes),"Unit":expense_unit(x.cents,x.notes),"Origin":x.origin,"Responsible":x.responsible,"Notes":expense_notes(x.notes)} for x in incomes], Expenses=[{"ID":x.id,"Date":x.date.isoformat(),"Concept":x.concept,"Amount":x.cents,"AmountMx":x.cents/100,"Quantity":expense_quantity(x.notes),"Unit":expense_unit(x.cents,x.notes),"Category":x.category,"Responsible":x.responsible,"Notes":expense_notes(x.notes)} for x in expenses], Total=sum(x.cents for x in incomes), ExpenseTotal=sum(x.cents for x in expenses), Message=request.GET.get("mensaje",""))
+    ctx=base_context(request, Today=today, CanEdit=current_role(request.user) in (ADMIN,"finanzas"), Items=[{"ID":x.id,"Date":x.date.isoformat(),"Concept":x.concept,"Amount":x.cents,"AmountMx":x.cents/100,"Quantity":expense_quantity(x.notes),"Unit":expense_unit(x.cents,x.notes),"Origin":x.origin,"Responsible":x.responsible,"Notes":expense_notes(x.notes)} for x in incomes], ExpenseDays=expense_days, Total=sum(x.cents for x in incomes), ExpenseTotal=sum(x.cents for x in expenses), Message=request.GET.get("mensaje",""))
     ctx["TotalMx"] = ctx["Total"] / 100
     ctx["ExpenseTotalMx"] = ctx["ExpenseTotal"] / 100
     return render(request,"pages/finance.html",ctx)
@@ -234,13 +254,21 @@ def _money_form(request, expense=False):
     if item_id:
         try:record=cls.objects.get(pk=parse_id(item_id))
         except (ValueError,cls.DoesNotExist):return form_feedback("/finanzas","El registro que intentas editar ya no existe.")
-        for key,value in fields.items():setattr(record,key,value)
+        for key,value in fields.items():
+            if key!="purchase":setattr(record,key,value)
+        if expense and record.purchase_id:
+            record.purchase.date=day;record.purchase.category=source;record.purchase.responsible=responsible;record.purchase.notes=notes;record.purchase.save()
+            Expense.objects.filter(purchase_id=record.purchase_id).update(date=day,category=source,responsible=responsible)
         record.save()
+    elif expense:
+        with transaction.atomic():
+            fields["purchase"]=Purchase.objects.create(date=day,category=source,responsible=responsible,notes=notes,registered_by=request.user)
+            cls.objects.create(**fields)
     else:cls.objects.create(**fields)
     return see_other("/finanzas?mensaje="+ ("Egreso" if expense else "Ingreso") + "%20registrado")
 
 def _multi_money_form(request, expense):
-    """Guarda cada renglón de productos como un movimiento independiente."""
+    """Guarda todos los productos de una compra bajo un mismo registro."""
     f=request.POST; names=f.getlist("productos_nombre"); quantities=f.getlist("productos_cantidad"); prices=f.getlist("productos_precio")
     source=f.get("categoria" if expense else "origen", "").strip(); responsible=f.get("responsable", "").strip(); notes=f.get("notas", "").strip()
     try:
@@ -264,6 +292,9 @@ def _multi_money_form(request, expense):
             rows.append(fields)
         if not rows or total>Decimal("1000000000"): raise ValueError()
         with transaction.atomic():
+            if expense:
+                purchase=Purchase.objects.create(date=day,category=source,responsible=responsible,notes=notes,registered_by=request.user)
+                for row in rows: row["purchase"]=purchase
             (Expense if expense else Income).objects.bulk_create([(Expense if expense else Income)(**row) for row in rows])
     except (ValueError, TypeError, InvalidOperation):
         return form_feedback("/finanzas","Revisa los productos, cantidades y precios.")
@@ -292,7 +323,22 @@ def expense_edit(request):
     return _money_form(request,True) if request.method=="POST" else error_page(405,"Método no disponible","Usa el formulario.","/finanzas")
 
 def expense_delete(request):
-    return finance_delete(request,Expense)
+    if request.method == "POST" and request.POST.getlist("purchase_ids"):
+        gate=allowed(request,"*")
+        if gate:return gate
+        if current_role(request.user) not in (ADMIN,"finanzas"):return error_page(403,"Acceso restringido","Solo administración y Finanzas pueden eliminar registros.","/finanzas")
+        try: ids=[parse_id(value) for value in request.POST.getlist("purchase_ids")]
+        except ValueError:return form_feedback("/finanzas","La selección contiene una compra no válida.")
+        Purchase.objects.filter(pk__in=ids).delete()
+        return see_other("/finanzas?mensaje=Compra%20eliminada")
+    purchase_id=None
+    if request.method=="POST" and request.POST.get("id"):
+        try: purchase_id=Expense.objects.filter(pk=parse_id(request.POST["id"])).values_list("purchase_id",flat=True).first()
+        except ValueError: pass
+    response=finance_delete(request,Expense)
+    if purchase_id and response.status_code==303 and not Expense.objects.filter(purchase_id=purchase_id).exists():
+        Purchase.objects.filter(pk=purchase_id).delete()
+    return response
 
 def finance_delete(request,model):
     gate=allowed(request,"*")

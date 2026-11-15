@@ -6,6 +6,12 @@
   const confirmedForms = new WeakSet();
   let lastDialogTrigger = null;
 
+  function selectedBulkInputs(form) {
+    return Array.from(form.elements).filter((control) =>
+      (control.name === "ids" || control.name === "purchase_ids") && control.checked
+    );
+  }
+
   // Cierra el diálogo activo y devuelve el foco al control que lo abrió.
   function closeModal() {
     if (!activeModal) return;
@@ -24,7 +30,7 @@
     if (!master) return;
 
     const formId = master.dataset.selectAll;
-    const items = document.querySelectorAll(`input[type="checkbox"][form="${formId}"][name="ids"]`);
+    const items = document.querySelectorAll(`input[type="checkbox"][form="${formId}"][name="ids"], input[type="checkbox"][form="${formId}"][name="purchase_ids"]`);
     items.forEach((item) => { item.checked = master.checked; });
   });
 
@@ -55,13 +61,13 @@
 
   // Actualiza el control general cuando el usuario cambia una selección individual.
   document.addEventListener("change", (event) => {
-    const item = event.target.closest('input[type="checkbox"][name="ids"][form]');
+    const item = event.target.closest('input[type="checkbox"][name="ids"][form], input[type="checkbox"][name="purchase_ids"][form]');
     if (!item) return;
 
     const master = document.querySelector(`[data-select-all="${item.getAttribute("form")}"]`);
     if (!master) return;
 
-    const items = document.querySelectorAll(`input[type="checkbox"][form="${item.getAttribute("form")}"][name="ids"]`);
+    const items = document.querySelectorAll(`input[type="checkbox"][form="${item.getAttribute("form")}"][name="ids"], input[type="checkbox"][form="${item.getAttribute("form")}"][name="purchase_ids"]`);
     const checkedItems = Array.from(items).filter((checkbox) => checkbox.checked);
     master.checked = items.length > 0 && checkedItems.length === items.length;
     master.indeterminate = checkedItems.length > 0 && checkedItems.length < items.length;
@@ -104,7 +110,7 @@
     const message = submitter?.dataset.confirmAction || form.dataset.confirmAction;
     if (!message) return;
 
-    const selected = form.querySelectorAll('input[name="ids"]:checked');
+    const selected = selectedBulkInputs(form);
     const isBulkAction = form.classList.contains("bulk-actions");
     if (isBulkAction && selected.length === 0 && !form.querySelector('input[name="id"]')) {
       event.preventDefault();
@@ -128,7 +134,7 @@
       closeConfirmDialog();
       if (pending?.form) {
         const { form, submitter } = pending;
-        if (form.classList.contains("bulk-actions") && !form.querySelector('input[name="id"]') && form.querySelectorAll('input[name="ids"]:checked').length === 0) {
+        if (form.classList.contains("bulk-actions") && !form.querySelector('input[name="id"]') && selectedBulkInputs(form).length === 0) {
           showNotice("Selecciona al menos un elemento antes de continuar.");
           return;
         }
