@@ -1,7 +1,8 @@
 FROM python:3.14-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1
+    PYTHONUNBUFFERED=1 \
+    STATICFILES_STORAGE=django.contrib.staticfiles.storage.StaticFilesStorage
 
 WORKDIR /app
 
